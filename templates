@@ -1,0 +1,276 @@
+“””
+Sosyal Medya Format Şablonları
+Farklı platformlar için özelleştirilmiş formatlar
+“””
+
+# Instagram Şablonları
+
+INSTAGRAM_TEMPLATES = {
+“story”: {
+“name”: “Instagram Story”,
+“emoji”: “📱”,
+“max_chars”: 2200,
+“format”: lambda items, title: f”””{title}
+
+{’’.join([f”✨ {item}\n” for item in items])}
+#liste #motivasyon #öneriler”””
+},
+
+```
+"post": {
+    "name": "Instagram Post",
+    "emoji": "📸",
+    "max_chars": 2200,
+    "format": lambda items, title: f"""{title}
+```
+
+{’’.join([f”{i}. {item}\n” for i, item in enumerate(items, 1)])}
+━━━━━━━━━━━━━━
+💡 Hangi maddeyi uygulayacaksın?
+📌 Kaydet unutma!
+
+#liste #motivasyon #tavsiye #öneri #productivity”””
+},
+
+```
+"carousel": {
+    "name": "Instagram Carousel Post",
+    "emoji": "🎠",
+    "max_chars": 2200,
+    "format": lambda items, title: f"""{title}
+```
+
+👉 Kaydır ve hepsini gör!
+
+{’’.join([f”• {item}\n” for item in items])}
+━━━━━━━━━━━━━━
+❤️ Beğenmeyi unutma!
+💾 Kaydet ve sonra uygula!
+
+#carousel #liste #ipuçları #bilgi”””
+},
+
+```
+"reel": {
+    "name": "Instagram Reels Açıklama",
+    "emoji": "🎬",
+    "max_chars": 2200,
+    "format": lambda items, title: f"""{title}
+```
+
+{’’.join([f”{i}️⃣ {item}\n” for i, item in enumerate(items, 1)])}
+━━━━━━━━━━━━━━
+🎥 Reels’i beğen ve paylaş!
+👥 Arkadaşlarını etiketle!
+
+#reels #keşfet #viral #trend”””
+}
+}
+
+# YouTube Şablonları
+
+YOUTUBE_TEMPLATES = {
+“description”: {
+“name”: “YouTube Video Açıklaması”,
+“emoji”: “📺”,
+“max_chars”: 5000,
+“format”: lambda items, title: f”””{title}
+
+⏱️ Zaman Damgaları:
+{’’.join([f”00:0{i} - {item}\n” for i, item in enumerate(items, 1)])}
+━━━━━━━━━━━━━━
+🔔 Kanalıma abone olmayı unutmayın!
+👍 Beğenmeyi ve yorum yapmayı unutmayın!
+🔗 Sosyal medya hesaplarım:
+
+#youtube #video #içerik”””
+},
+
+```
+"community": {
+    "name": "YouTube Community Post",
+    "emoji": "💬",
+    "max_chars": 5000,
+    "format": lambda items, title: f"""{title}
+```
+
+{’’.join([f”✅ {item}\n” for item in items])}
+❓ Sizin favoriniz hangisi?
+💬 Yorumlarda paylaşın!”””
+},
+
+```
+"shorts": {
+    "name": "YouTube Shorts Açıklama",
+    "emoji": "📱",
+    "max_chars": 5000,
+    "format": lambda items, title: f"""{title}
+```
+
+{’’.join([f”🔥 {item}\n” for item in items])}
+━━━━━━━━━━━━━━
+👆 Beğen ve abone ol!
+
+#shorts #keşfet #viral”””
+}
+}
+
+# Twitter/X Şablonları
+
+TWITTER_TEMPLATES = {
+“thread”: {
+“name”: “Twitter Thread”,
+“emoji”: “🧵”,
+“max_chars”: 280,
+“format”: lambda items, title: f”””{title} 🧵
+
+1/{len(items)}
+
+{’’.join([f”{i}/{len(items)} {item}\n\n” for i, item in enumerate(items, 1)])}”””
+},
+
+```
+"single": {
+    "name": "Twitter Single Post",
+    "emoji": "🐦",
+    "max_chars": 280,
+    "format": lambda items, title: f"""{title}
+```
+
+{’’.join([f”• {item}\n” for item in items[:5]])}
+#liste #twitter”””
+}
+}
+
+# LinkedIn Şablonları
+
+LINKEDIN_TEMPLATES = {
+“post”: {
+“name”: “LinkedIn Post”,
+“emoji”: “💼”,
+“max_chars”: 3000,
+“format”: lambda items, title: f”””{title}
+
+{’’.join([f”✓ {item}\n” for item in items])}
+━━━━━━━━━━━━━━
+💡 Sizce hangisi en önemli?
+👇 Yorumlarda tartışalım!
+
+#linkedin #profesyonel #kariyer #başarı”””
+},
+
+```
+"article": {
+    "name": "LinkedIn Makale",
+    "emoji": "📄",
+    "max_chars": 125000,
+    "format": lambda items, title: f"""{title}
+```
+
+{’’.join([f”{i}. {item}\n\n” for i, item in enumerate(items, 1)])}
+Sonuç:
+Bu maddeler hakkında ne düşünüyorsunuz? Deneyimlerinizi paylaşın!
+
+#makale #öneri #rehber”””
+}
+}
+
+# TikTok Şablonları
+
+TIKTOK_TEMPLATES = {
+“video”: {
+“name”: “TikTok Video Açıklama”,
+“emoji”: “🎵”,
+“max_chars”: 2200,
+“format”: lambda items, title: f”””{title}
+
+{’’.join([f”{i}️⃣ {item}\n” for i, item in enumerate(items, 1)])}
+━━━━━━━━━━━━━━
+❤️ Beğen 💬 Yorum yap 🔄 Paylaş
+
+#tiktok #keşfet #fyp #viral”””
+}
+}
+
+# Genel Şablonlar
+
+GENERAL_TEMPLATES = {
+“bullet”: {
+“name”: “Basit Madde İşaretli”,
+“emoji”: “📋”,
+“max_chars”: None,
+“format”: lambda items, title: f”””{title}
+
+{’’.join([f”• {item}\n” for item in items])}”””
+},
+
+```
+"numbered": {
+    "name": "Numaralı Liste",
+    "emoji": "🔢",
+    "max_chars": None,
+    "format": lambda items, title: f"""{title}
+```
+
+{’’.join([f”{i}. {item}\n” for i, item in enumerate(items, 1)])}”””
+},
+
+```
+"emoji_numbered": {
+    "name": "Numaralı Emoji",
+    "emoji": "🎯",
+    "max_chars": None,
+    "format": lambda items, title: _emoji_numbered_format(items, title)
+},
+
+"checkboxes": {
+    "name": "Checkbox Liste",
+    "emoji": "☑️",
+    "max_chars": None,
+    "format": lambda items, title: f"""{title}
+```
+
+{’’.join([f”☐ {item}\n” for item in items])}”””
+}
+}
+
+def _emoji_numbered_format(items, title):
+“”“Emoji numaralı format helper”””
+emojis = [“1️⃣”, “2️⃣”, “3️⃣”, “4️⃣”, “5️⃣”, “6️⃣”, “7️⃣”, “8️⃣”, “9️⃣”, “🔟”]
+result = f”{title}\n\n”
+for i, item in enumerate(items):
+emoji = emojis[i] if i < len(emojis) else f”{i+1}.”
+result += f”{emoji} {item}\n”
+return result
+
+# Tüm şablonları birleştir
+
+ALL_TEMPLATES = {
+“Instagram”: INSTAGRAM_TEMPLATES,
+“YouTube”: YOUTUBE_TEMPLATES,
+“Twitter/X”: TWITTER_TEMPLATES,
+“LinkedIn”: LINKEDIN_TEMPLATES,
+“TikTok”: TIKTOK_TEMPLATES,
+“Genel”: GENERAL_TEMPLATES
+}
+
+def get_template_list():
+“”“Tüm şablon isimlerini getir”””
+templates = []
+for platform, platform_templates in ALL_TEMPLATES.items():
+for template_key, template_data in platform_templates.items():
+templates.append({
+“platform”: platform,
+“key”: template_key,
+“name”: template_data[“name”],
+“emoji”: template_data[“emoji”],
+“full_name”: f”{template_data[‘emoji’]} {template_data[‘name’]}”
+})
+return templates
+
+def apply_template(platform, template_key, items, title=“📋 Liste”):
+“”“Şablonu uygula”””
+if platform in ALL_TEMPLATES and template_key in ALL_TEMPLATES[platform]:
+template = ALL_TEMPLATES[platform][template_key]
+return template[“format”](items, title)
+return None
