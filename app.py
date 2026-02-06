@@ -1,81 +1,151 @@
 import streamlit as st
 import easyocr
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
+import textwrap
 
 # Sayfa Ayarları
-st.set_page_config(page_title="OCR Text Extractor", layout="wide")
+st.set_page_config(page_title="Social Media Content Factory", layout="wide")
 
-st.title("📸 Screenshot to List (OCR Test)")
-st.markdown("Ekran görüntüsünü yükle, metinleri ayıkla ve listeyi düzenle.")
+st.title("🏭 Social Media Content Factory")
+st.markdown("1. Adım: Ekran görüntüsünü yükle ve metni al.\n2. Adım: Tasarımı yap ve paylaş.")
 
-# --- CACHING MEKANİZMASI ---
-# EasyOCR modelini her seferinde tekrar yüklememek için bellekte tutuyoruz.
+# --- FONKSİYONLAR ---
+
 @st.cache_resource
-def load_model():
-    # Türkçe (tr) ve İngilizce (en) desteği
-    return easyocr.Reader(['tr', 'en'], gpu=False) 
+def load_ocr_model():
+    return easyocr.Reader(['tr', 'en'], gpu=False)
 
-with st.spinner("AI Modeli Yükleniyor... (İlk açılışta biraz sürebilir)"):
-    reader = load_model()
+def create_social_image(text, format_type, bg_color, text_color, font_size, font_file):
+    # 1. Tuval Boyutları
+    if format_type == "Instagram Post (1:1)":
+        width, height = 1080, 1080
+    elif format_type == "Instagram Story (9:16)":
+        width, height = 1080, 1920
+    else: # YouTube Thumbnail
+        width, height = 1280, 720
+        
+    # 2. Tuval Oluştur
+    img = Image.new('RGB', (width, height), color=bg_color)
+    draw = ImageDraw.Draw(img)
+    
+    # 3. Font Ayarlama
+    try:
+        if font_file is not None:
+            font = ImageFont.truetype(font_file, font_size)
+        else:
+            # Font yüklenmezse varsayılanı kullan (biraz küçük olabilir)
+            font = ImageFont.load_default()
+    except Exception as e:
+        st.error(f"Font hatası: {e}")
+        font = ImageFont.load_default()
+
+    # 4. Metni Satırlara Bölme (Text Wrapping)
+    # Genişliğe göre ortalama karakter sayısını tahmin et (basit bir mantıkla)
+    char_per_line = int(width / (font_size * 0.6)) 
+    lines = textwrap.wrap(text, width=char_per_line)
+    
+    # 5. Metni Ortalamak İçin Hesaplama
+    # Toplam metin bloğunun yüksekliğini hesapla
+    # getbbox yerine getsize kullanımı (eski pillow sürümleri için gerekebilir ama bbox daha modern)
+    total_text_height = 0
+    line_heights = []
+    
+    for line in lines:
+        bbox = draw.textbbox((0, 0), line, font=font)
+        h = bbox[3] - bbox[1]
+        line_heights.append(h)
+        total_text_height += h + 10 # 10px satır arası boşluk
+
+    current_y = (height - total_text_height) / 2
+    
+    # 6. Metni Yazdır
+    for i, line in enumerate(lines):
+        bbox = draw.textbbox((0, 0), line, font=font)
+        line_width = bbox[2] - bbox[0]
+        x_pos = (width - line_width) / 2
+        
+        draw.text((x_pos, current_y), line, font=font, fill=text_color)
+        current_y += line_heights[i] + 10
+        
+    return img
 
 # --- ARAYÜZ ---
-col1, col2 = st.columns([1, 2])
 
-with col1:
-    uploaded_file = st.file_uploader("Bir ekran görüntüsü yükle (PNG/JPG)", type=["png", "jpg", "jpeg"])
+# Sol Panel: Yükleme ve OCR
+with st.sidebar:
+    st.header("1. Veri Kaynağı")
+    uploaded_file = st.file_uploader("Ekran Görüntüsü Yükle", type=["png", "jpg", "jpeg"])
     
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.image(image, caption='Yüklenen Görsel', use_column_width=True)
-        
-        process_btn = st.button("Metinleri Çıkar", type="primary")
+    # Font Yükleme (Opsiyonel ama Önemli)
+    st.info("Daha şık görünüm için bilgisayarından bir .ttf (Font) dosyası yükleyebilirsin.")
+    uploaded_font = st.file_uploader("Font Dosyası (.ttf)", type=["ttf"])
 
-with col2:
-    if uploaded_file is not None and process_btn:
-        with st.spinner('Görüntü işleniyor, metinler ayıklanıyor...'):
-            try:
-                # Pillow görselini Numpy array'e çevir (EasyOCR formatı için)
-                image_np = np.array(image)
-                
-                # Okuma işlemi
+    if uploaded_file is not None:
+        st.image(uploaded_file, caption='Kaynak Görsel', use_column_width=True)
+        if st.button("Metinleri Tara", type="primary"):
+            with st.spinner('Yazılar okunuyor...'):
+                reader = load_ocr_model()
+                image_np = np.array(Image.open(uploaded_file))
                 result = reader.readtext(image_np)
                 
-                # Sadece metinleri ve güven skorlarını alalım
-                data = []
-                for (bbox, text, prob) in result:
-                    # Güven skoru %30'un altındaysa gürültü olabilir, almayabiliriz
-                    if prob > 0.3: 
-                        data.append({"Metin": text, "Güven Skoru": round(prob, 2)})
-                
-                # Veriyi Pandas DataFrame'e çevir
-                df = pd.DataFrame(data)
-                
-                st.success(f"İşlem Tamamlandı! {len(df)} satır metin bulundu.")
-                
-                # --- DÜZENLENEBİLİR TABLO ---
-                st.subheader("📝 Düzenlenebilir Liste")
-                st.info("Aşağıdaki listede hatalı okunan yerleri düzeltebilir veya silebilirsin.")
-                
-                # st.data_editor ile kullanıcıya Excel gibi düzeltme imkanı veriyoruz
-                edited_df = st.data_editor(df, num_rows="dynamic", use_container_width=True)
-                
-                # --- LİSTEYİ İNDİRME ---
-                st.write("---")
-                csv = edited_df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="Listeyi CSV Olarak İndir",
-                    data=csv,
-                    file_name='okunan_metinler.csv',
-                    mime='text/csv',
-                )
-                
-                # Bir sonraki aşama (Formatlama) için veriyi session state'e atabiliriz
-                st.session_state['final_list'] = edited_df['Metin'].tolist()
+                # Güvenilir sonuçları al
+                extracted_texts = [text for (bbox, text, prob) in result if prob > 0.3]
+                st.session_state['ocr_results'] = extracted_texts
+                st.success("Tarama Bitti!")
 
-            except Exception as e:
-                st.error(f"Bir hata oluştu: {e}")
+# Ana Panel: Düzenleme ve Önizleme
+if 'ocr_results' in st.session_state:
+    st.header("2. İçerik Tasarımı")
+    
+    col_edit, col_preview = st.columns([1, 1])
+    
+    with col_edit:
+        st.subheader("İçerik Ayarları")
+        
+        # Hangi metni görselleştireceğiz?
+        selected_text = st.selectbox("Listeden Metin Seç", st.session_state['ocr_results'])
+        custom_text = st.text_area("Metni Düzenle", value=selected_text, height=100)
+        
+        st.markdown("---")
+        st.subheader("Görsel Ayarları")
+        
+        format_type = st.radio("Boyut", ["Instagram Post (1:1)", "Instagram Story (9:16)", "YouTube Thumbnail (16:9)"])
+        bg_color = st.color_picker("Arka Plan Rengi", "#1E1E1E")
+        text_color = st.color_picker("Yazı Rengi", "#FFFFFF")
+        font_size = st.slider("Yazı Boyutu", 20, 150, 60)
+        
+        generate_btn = st.button("Tasarımı Oluştur / Güncelle")
 
-    elif uploaded_file is None:
-        st.info("Başlamak için sol taraftan bir resim yükleyin.")
+    with col_preview:
+        st.subheader("Önizleme")
+        if generate_btn or 'generated_image' in st.session_state:
+            # Görüntüyü oluştur
+            final_img = create_social_image(
+                custom_text, 
+                format_type, 
+                bg_color, 
+                text_color, 
+                font_size, 
+                uploaded_font
+            )
+            
+            # Ekrana bas
+            st.image(final_img, caption="Oluşturulan İçerik", use_column_width=True)
+            
+            # İndirme Butonu
+            import io
+            buf = io.BytesIO()
+            final_img.save(buf, format="PNG")
+            byte_im = buf.getvalue()
+            
+            st.download_button(
+                label="🖼️ Görseli İndir",
+                data=byte_im,
+                file_name="social_post.png",
+                mime="image/png"
+            )
+
+else:
+    st.info("👈 Başlamak için sol menüden bir resim yükle ve 'Metinleri Tara' butonuna bas.")
